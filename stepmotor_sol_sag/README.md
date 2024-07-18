@@ -1,7 +1,2 @@
-<object width="425" height="350">
-  <param name="movie" value="http://www.youtube.com/user/wwwLoveWatercom?v=BTRN1YETpyg" />
-  <param name="wmode" value="transparent" />
-  <embed src="https://www.youtube.com/embed/ZmBtKG9jHko?si=AAfkKgZdMG65kfU0"
-         type="application/x-shockwave-flash"
-         wmode="transparent" width="425" height="350" />
-</object>
+
+[![IMAGE ALT TEXT HERE](https://www.youtube.com/watch?v=ZmBtKG9jHko&t=3s/0.jpg)](https://www.youtube.com/watch?v=ZmBtKG9jHko&t=3s)
