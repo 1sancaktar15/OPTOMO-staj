@@ -79,7 +79,7 @@ namespace StepMotorControl
         }
 
         private void btnSolaDon_Click(object sender, EventArgs e)
-        {
+        { 
             try
             {
                 if (_serialPort.IsOpen)
