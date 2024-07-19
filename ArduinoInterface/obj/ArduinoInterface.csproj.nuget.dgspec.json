@@ -1,0 +1,53 @@
+{
+  "format": 1,
+  "restore": {
+    "/home/elif/Masaüstü/StepMotorKontrol/ArduinoInterface/ArduinoInterface.csproj": {}
+  },
+  "projects": {
+    "/home/elif/Masaüstü/StepMotorKontrol/ArduinoInterface/ArduinoInterface.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/home/elif/Masaüstü/StepMotorKontrol/ArduinoInterface/ArduinoInterface.csproj",
+        "projectName": "ArduinoInterface",
+        "projectPath": "/home/elif/Masaüstü/StepMotorKontrol/ArduinoInterface/ArduinoInterface.csproj",
+        "packagesPath": "/home/elif/.nuget/packages/",
+        "outputPath": "/home/elif/Masaüstü/StepMotorKontrol/ArduinoInterface/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/home/elif/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net48"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net48": {
+            "targetAlias": "net48",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net48": {
+          "targetAlias": "net48",
+          "dependencies": {
+            "Microsoft.NETFramework.ReferenceAssemblies": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[1.0.3, )",
+              "autoReferenced": true
+            }
+          },
+          "runtimeIdentifierGraphPath": "/usr/lib/dotnet/sdk/8.0.107/RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

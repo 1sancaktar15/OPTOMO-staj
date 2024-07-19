@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "owNILKOq4Gx7Qubq6fs8RcaYf3koEhEd5/ykHMBMeMe0Ofvoh1/ciTKa4pBVmhx8nfTuAgMP/0WAqf+ODArFyg==",
+  "success": true,
+  "projectFilePath": "/home/elif/Masaüstü/StepMotorKontrol/ArduinoInterface/ArduinoInterface.csproj",
+  "expectedPackageFiles": [
+    "/home/elif/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.3/microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
+    "/home/elif/.nuget/packages/microsoft.netframework.referenceassemblies.net48/1.0.3/microsoft.netframework.referenceassemblies.net48.1.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

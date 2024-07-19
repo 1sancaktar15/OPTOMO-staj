@@ -1,0 +1,5 @@
+is_global = true
+build_property.RootNamespace = ArduinoInterface
+build_property.ProjectDir = /home/elif/Masaüstü/StepMotorKontrol/ArduinoInterface/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
