@@ -1,6 +1,8 @@
 using System;
 using System.IO.Ports;
+using System.Linq;
 using System.Windows.Forms;
+using System.IO;
 
 namespace StepMotorControl
 {
@@ -8,42 +10,82 @@ namespace StepMotorControl
     {
         public SerialPort port;
 
-        private  void DataReceivedHandler(
-            object sender,
-            SerialDataReceivedEventArgs e)
+        private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
-            
             string indata = port.ReadLine();
             MessageBox.Show("tamamlandı");
-
         }
-        
+
         public Form1()
         {
             InitializeComponent();
-            port = new SerialPort("/dev/ttyACM0", 9600);
+            InitializeComboBox();
+            port = new SerialPort();
             port.Parity = Parity.None;
             port.StopBits = StopBits.One;
             port.DataBits = 8;
             port.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
         }
 
-        public void btnConnect_Click(object sender, EventArgs e)
+        private void InitializeComboBox()
         {
-            
-            try
+            var ports = Directory.GetFiles("/dev/", "tty*")
+                .Where(portName => portName.StartsWith("/dev/ttyUSB") || portName.StartsWith("/dev/ttyACM"))
+                .Distinct()
+                .ToList();
+
+            foreach (var portName in ports)
             {
-                port.Open();
-            }
-            catch (Exception exception)
-            {
-                MessageBox.Show($"Connection Failed \nError: {exception.Message}", "Oke", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                using (var testPort = new SerialPort(portName))
+                {
+                    try
+                    {
+                        testPort.Open();
+                        comboBoxPorts.Items.Add(portName);
+                        testPort.Close();
+                    }
+                    catch
+                    {
+                        // Ignore ports that cannot be opened
+                    }
+                }
             }
 
-            if (port.IsOpen)
+            if (comboBoxPorts.Items.Count > 0)
             {
-                enableControls();
-                MessageBox.Show("Bağlantı Başarılı");
+                comboBoxPorts.SelectedIndex = 0;
+            }
+            else
+            {
+                MessageBox.Show("No available serial ports found.");
+            }
+        }
+
+        public void btnConnect_Click(object sender, EventArgs e)
+        {
+            if (comboBoxPorts.SelectedItem != null)
+            {
+                port.PortName = comboBoxPorts.SelectedItem.ToString();
+                port.BaudRate = 9600;
+
+                try
+                {
+                    port.Open();
+                }
+                catch (Exception exception)
+                {
+                    MessageBox.Show($"Connection Failed \nError: {exception.Message}", "Oke", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                if (port.IsOpen)
+                {
+                    enableControls();
+                    MessageBox.Show("Bağlantı Başarılı");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please select a port first.");
             }
         }
 
@@ -62,18 +104,16 @@ namespace StepMotorControl
             {
                 MessageBox.Show("Disconnection error: " + ex.Message);
             }
-            
         }
 
         public void btnSolaDon_Click(object sender, EventArgs e)
         {
             if (port.IsOpen)
             {
-                    int steps = (int)numericUpDownAdim.Value;
-                    port.WriteLine("1 " + steps);
-                    String gelenVeri = port.ReadLine();
-                    ProcessReceivedData(gelenVeri);
-                    
+                int steps = (int)numericUpDownAdim.Value;
+                port.WriteLine("1 " + steps);
+                String gelenVeri = port.ReadLine();
+                ProcessReceivedData(gelenVeri);
             }
             else
             {
@@ -85,10 +125,10 @@ namespace StepMotorControl
         {
             if (port.IsOpen)
             {
-                    int steps = (int)numericUpDownAdim.Value;
-                    port.WriteLine("0 " + steps); // coercion
-                    String gelenVeri = port.ReadLine();
-                    ProcessReceivedData(gelenVeri);
+                int steps = (int)numericUpDownAdim.Value;
+                port.WriteLine("0 " + steps);
+                String gelenVeri = port.ReadLine();
+                ProcessReceivedData(gelenVeri);
             }
             else
             {
@@ -99,7 +139,7 @@ namespace StepMotorControl
         public void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (port != null && port.IsOpen)
-                port.Close(); // Form kapatıldığında COM portu kapat
+                port.Close();
         }
 
         private void enableControls()
@@ -117,15 +157,14 @@ namespace StepMotorControl
             btnSagaDon.Enabled = false;
             btnSolaDon.Enabled = false;
         }
-        
+
         private void ProcessReceivedData(string data)
         {
-            // Gelen veri doğrulanır ve uygun pop-up mesajı gösterilir
-            if (data.Contains("bir")) //string şeklinde verdiğimde algıladı
+            if (data.Contains("bir"))
             {
                 MessageBox.Show("Sola döndürülme işlemi tamamlandı.");
             }
-            else if (data.Contains("sifir")) // türkçe karakter kullanılmamalı
+            else if (data.Contains("sifir"))
             {
                 MessageBox.Show("Sağa döndürülme işlemi tamamlandı.");
             }
@@ -134,11 +173,5 @@ namespace StepMotorControl
                 MessageBox.Show("Geçersiz komut alındı.");
             }
         }
-        
-        
     }
 }
-
-
-
-
