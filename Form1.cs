@@ -1,125 +1,144 @@
 using System;
 using System.IO.Ports;
 using System.Windows.Forms;
-using System.Text.RegularExpressions;
 
 namespace StepMotorControl
 {
     public partial class Form1 : Form
     {
-        private SerialPort _serialPort;
+        public SerialPort port;
 
+        private  void DataReceivedHandler(
+            object sender,
+            SerialDataReceivedEventArgs e)
+        {
+            
+            string indata = port.ReadLine();
+            MessageBox.Show("tamamlandı");
+
+        }
+        
         public Form1()
         {
             InitializeComponent();
-            _serialPort = new SerialPort();
-            _serialPort.DataReceived += SerialPort_DataReceived;
+            port = new SerialPort("/dev/ttyACM0", 9600);
+            port.Parity = Parity.None;
+            port.StopBits = StopBits.One;
+            port.DataBits = 8;
+            port.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
         }
 
-        private void btnConnect_Click(object sender, EventArgs e)
+        public void btnConnect_Click(object sender, EventArgs e)
         {
             
-            // Bağlantı durumu gösterme kodu eklenebilir
             try
             {
-                _serialPort.PortName = "/dev/ttyACM0"; // Arduino'nuzun bağlı olduğu portu kontrol edin
-                _serialPort.BaudRate = 9600;
-                _serialPort.Open();
-                MessageBox.Show("Bağlantı başarılı!");
+                port.Open();
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                MessageBox.Show("Bağlantı hatası: " + ex.Message);
+                MessageBox.Show($"Connection Failed \nError: {exception.Message}", "Oke", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            if (port.IsOpen)
+            {
+                enableControls();
+                MessageBox.Show("Bağlantı Başarılı");
             }
         }
 
-        private void btnDisconnect_Click(object sender, EventArgs e)
+        public void btnDisconnect_Click(object sender, EventArgs e)
         {
             try
             {
-                if (_serialPort.IsOpen)
+                if (port.IsOpen)
                 {
-                    _serialPort.Close();
-                    MessageBox.Show("Bağlantı kapandı!");
+                    port.Close();
+                    MessageBox.Show("Disconnected!");
+                    disableControls();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Bağlantı kapama hatası: " + ex.Message);
+                MessageBox.Show("Disconnection error: " + ex.Message);
             }
+            
         }
 
-        private void btnSagaDon_Click(object sender, EventArgs e)
+        public void btnSolaDon_Click(object sender, EventArgs e)
         {
-            try
+            if (port.IsOpen)
             {
-                if (_serialPort.IsOpen)
-                {
-                    int adim;
-                    bool isValidNumber = int.TryParse(txtAdim.Text, out adim);
-
-                    if (isValidNumber)
-                    {
-                        _serialPort.WriteLine("SAGA " + adim);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Geçerli bir sayı girin.");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Seri port bağlantısı açık değil.");
-                }
+                    int steps = (int)numericUpDownAdim.Value;
+                    port.WriteLine("1 " + steps);
+                    String gelenVeri = port.ReadLine();
+                    ProcessReceivedData(gelenVeri);
+                    
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show("Hata: " + ex.Message);
+                MessageBox.Show("Serial port is not connected.");
             }
         }
 
-        private void btnSolaDon_Click(object sender, EventArgs e)
-        { 
-            try
-            {
-                if (_serialPort.IsOpen)
-                {
-                    string inputText = txtAdim.ToString(); // TextBox içeriğini al
-                    MessageBox.Show("Girdi: " + inputText ); // Girdiyi göster
-                    
-                   // int adim = int.Parse(txtAdim.Text);
-                    int adim = Convert.ToInt32(txtAdim.Text);
-
-                    //MessageBox.Show("girilen adim: " + adim );
-                    
-                    
-
-                    // Geçerli bir sayı mı kontrol et
-                    if (adim is int)
-                    {
-                        MessageBox.Show("Geçerli bir sayı: " + adim.ToString()); // Sayıyı göster
-                        _serialPort.WriteLine("1" + adim);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Girdiğiniz değerin tipi:" + adim.GetType() +"\n Geçerli bir sayı girin.");
-                    }
-                }
-                else
-                {
-                    MessageBox.Show("Seri port bağlantısı açık değil.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Hata: " + ex.Message);
-            }
-        }
-
-        private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        public void btnSagaDon_Click(object sender, EventArgs e)
         {
-            string data = _serialPort.ReadLine();
-            // Gelen veriyi işleyin (opsiyonel)
+            if (port.IsOpen)
+            {
+                    int steps = (int)numericUpDownAdim.Value;
+                    port.WriteLine("0 " + steps); // coercion
+                    String gelenVeri = port.ReadLine();
+                    ProcessReceivedData(gelenVeri);
+            }
+            else
+            {
+                MessageBox.Show("Serial port is not connected.");
+            }
         }
+
+        public void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (port != null && port.IsOpen)
+                port.Close(); // Form kapatıldığında COM portu kapat
+        }
+
+        private void enableControls()
+        {
+            btnConnect.Enabled = false;
+            btnDisconnect.Enabled = true;
+            btnSagaDon.Enabled = true;
+            btnSolaDon.Enabled = true;
+        }
+
+        private void disableControls()
+        {
+            btnConnect.Enabled = true;
+            btnDisconnect.Enabled = false;
+            btnSagaDon.Enabled = false;
+            btnSolaDon.Enabled = false;
+        }
+        
+        private void ProcessReceivedData(string data)
+        {
+            // Gelen veri doğrulanır ve uygun pop-up mesajı gösterilir
+            if (data.Contains("bir")) //string şeklinde verdiğimde algıladı
+            {
+                MessageBox.Show("Sola döndürülme işlemi tamamlandı.");
+            }
+            else if (data.Contains("sifir")) // türkçe karakter kullanılmamalı
+            {
+                MessageBox.Show("Sağa döndürülme işlemi tamamlandı.");
+            }
+            else if (data.Contains("Invalid command received."))
+            {
+                MessageBox.Show("Geçersiz komut alındı.");
+            }
+        }
+        
+        
     }
 }
+
+
+
+
