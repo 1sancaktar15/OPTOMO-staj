@@ -18,6 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "string.h"
+#include "stdio.h"
+#include "math.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -48,7 +51,8 @@ uint8_t packetCompleted = 0; // Paketin tamamlandığını belli etmek için fla
 uint8_t check = 0; // paketi ayrıştırmak için durum değişkeni
 uint8_t dataPacket[7]; // paketin tamamını saklamak için buffer dizisi
 uint8_t dataStepArray[6]; // data paketi içindeki adım sayısı içeren kısım
-uint32_t stepValue = 0; // step değerini int olarak saklamak için değişken
+uint32_t intStepValue = 0; // step değerini int olarak saklamak için değişken
+char data[32];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,6 +109,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		/*
 		HAL_GPIO_WritePin(motor_ena_pozitif_GPIO_Port, motor_ena_pozitif_Pin, GPIO_PIN_SET); // motoru enable et
 		for (uint32_t i = 0; i < 6400; i++) {
 			HAL_GPIO_WritePin(motor_pulse_GPIO_Port, motor_pulse_Pin,
@@ -113,6 +118,13 @@ int main(void)
 			HAL_GPIO_WritePin(motor_pulse_GPIO_Port, motor_pulse_Pin,
 					GPIO_PIN_RESET); // motor pulse pinini low yap
 			HAL_Delay(1); // 1 ms bekle
+		}
+		*/
+		if(packetCompleted == 1){
+			packetCompleted = 0;
+			convertDataNumber();
+			motorStart(dataPacket[1] - 0x30, intStepValue);
+
 		}
 
 		HAL_Delay(2000); // 2 sn. bekle
@@ -236,26 +248,26 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-	if(HAL_UART_Receive_IT(huart1, &rData[0], 1) != HAL_OK){
+	if(HAL_UART_Receive_IT(&huart1, &rData[0], 1) != HAL_OK){
 		Error_Handler();
 	}
 
 	if(check == 0){
 		dataPacket[check] = rData[0];
-		if(dataPacket[check] == "M"){
+		if(dataPacket[check] == 'M'){
 			check = 1;
 		}
 		else{
 			check = 0;
 		}
-	}else if(check == 1 && dataPacket[0] == "M"){
+	}else if(check == 1 && dataPacket[0] == 'M'){
 		dataPacket[check] = rData[0];
-		if(dataPacket[check] == "1" || dataPacket[check] == "0"){
+		if(dataPacket[check] == '1' || dataPacket[check] == '0'){
 			check = 2;
 		}else{
 			check = 0;
 		}
-	}else if(check == 2 && dataPacket[0] == "M"){
+	}else if(check == 2 && dataPacket[0] == 'M'){
 		dataPacket[check] = rData[0];
 		if(dataPacket[check] > 0x2F && dataPacket[check] < 0x3A){
 			check = 3;
@@ -269,21 +281,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		}else{
 			check = 0;
 		}
-	}else if(check == 4 && dataPacket[0] == "M"){
+	}else if(check == 4 && dataPacket[0] == 'M'){
 		dataPacket[check] = rData[0];
 		if(dataPacket[check] > 0x2F && dataPacket[check] < 0x3A){
 			check = 5;
 		}else{
 			check = 0;
 		}
-	}else if(check == 5 && dataPacket[0] == "M"){
+	}else if(check == 5 && dataPacket[0] == 'M'){
 		dataPacket[check] = rData[0];
 		if(dataPacket[check] > 0x2F && dataPacket[check] < 0x3A){
 			check = 6;
 		}else{
 			check = 0;
 		}
-	}else if(check == 6 && dataPacket[0] == "M"){
+	}else if(check == 6 && dataPacket[0] == 'M'){
 		dataPacket[check] = rData[0];
 		if(dataPacket[check] > 0x2F && dataPacket[check] < 0x3A){
 			check = 0;
@@ -299,7 +311,31 @@ void convertDataNumber(void){
 		dataStepArray[i-2] = dataPacket[i];
 	}
 	dataStepArray[5] = '\0';
-	stepValue = atoi(dataStepArray);
+	intStepValue = atoi(dataStepArray);
+}
+
+void motorStart(uint8_t direction, uint32_t stepValue){
+	HAL_GPIO_WritePin(motor_ena_pozitif_GPIO_Port, motor_ena_pozitif_Pin, GPIO_PIN_RESET);
+
+	if(direction){
+		HAL_GPIO_WritePin(motor_dir_GPIO_Port, motor_dir_Pin, GPIO_PIN_SET);
+	}else{
+		HAL_GPIO_WritePin(motor_dir_GPIO_Port, motor_dir_Pin, GPIO_PIN_RESET);
+	}
+
+	for(uint32_t i = 0; i < stepValue; i++){
+		HAL_GPIO_WritePin(motor_pulse_GPIO_Port, motor_pulse_Pin, GPIO_PIN_SET);
+		HAL_Delay(1);
+		HAL_GPIO_WritePin(motor_pulse_GPIO_Port, motor_pulse_Pin, GPIO_PIN_RESET);
+		HAL_Delay(1);
+	}
+
+	for(uint8_t i = 0; i < 7; i++){
+		dataPacket[i] = 0;
+	}
+
+	sprintf(data, "MCOM");
+	HAL_UART_Transmit(&huart1, (uint8_t*)data, strlen(data), HAL_MAX_DELAY);
 }
 
 /* USER CODE END 4 */
